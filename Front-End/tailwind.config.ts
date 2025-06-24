@@ -72,6 +72,7 @@ export default {
 			},
 			borderColor: {
 				DEFAULT: 'hsl(var(--border))',
+				border: 'hsl(var(--border))'
 			},
 			backgroundImage: {
 				'instagram-gradient': 'linear-gradient(45deg, #833AB4, #FD1D1D, #FCB045)',
