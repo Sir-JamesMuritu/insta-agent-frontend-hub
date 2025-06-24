@@ -70,6 +70,9 @@ export default {
 					yellow: '#FCAF45'
 				}
 			},
+			borderColor: {
+				DEFAULT: 'hsl(var(--border))',
+			},
 			backgroundImage: {
 				'instagram-gradient': 'linear-gradient(45deg, #833AB4, #FD1D1D, #FCB045)',
 				'instagram-hover': 'linear-gradient(45deg, #9B59B6, #E91E63, #FF5722)'
