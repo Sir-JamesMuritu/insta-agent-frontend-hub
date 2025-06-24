@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -15,61 +14,53 @@ interface Agent {
   status: "Available" | "Premium" | "Coming Soon";
 }
 
-const agents: Agent[] = [
-  {
-    id: "content-creator",
-    name: "Content Creator Agent",
-    description: "Automatically generates and posts engaging content based on your niche and audience preferences.",
-    features: ["Auto-post scheduling", "Caption generation", "Hashtag optimization", "Story creation"],
-    category: "Content",
-    status: "Available"
-  },
-  {
-    id: "engagement-bot",
-    name: "Engagement Manager",
-    description: "Intelligently likes, comments, and follows accounts to boost your organic reach.",
-    features: ["Smart liking", "Contextual comments", "Follow/unfollow strategy", "DM automation"],
-    category: "Engagement",
-    status: "Available"
-  },
-  {
-    id: "analytics-tracker",
-    name: "Analytics Tracker",
-    description: "Tracks performance metrics and provides insights to optimize your Instagram strategy.",
-    features: ["Performance tracking", "Competitor analysis", "Growth insights", "Report generation"],
-    category: "Analytics",
-    status: "Premium"
-  },
-  {
-    id: "growth-optimizer",
-    name: "Growth Optimizer",
-    description: "Uses advanced algorithms to maximize your follower growth and engagement rates.",
-    features: ["Target audience identification", "Optimal posting times", "Engagement prediction", "Growth strategies"],
-    category: "Growth",
-    status: "Coming Soon"
-  },
-  {
-    id: "story-master",
-    name: "Story Master",
-    description: "Creates compelling Instagram stories with polls, questions, and interactive elements.",
-    features: ["Story templates", "Interactive stickers", "Story analytics", "Auto-highlights"],
-    category: "Content",
-    status: "Available"
-  },
-  {
-    id: "influencer-connector",
-    name: "Influencer Connector",
-    description: "Finds and connects with relevant influencers and potential collaboration partners.",
-    features: ["Influencer discovery", "Outreach automation", "Collaboration tracking", "ROI analysis"],
-    category: "Growth",
-    status: "Premium"
-  }
-];
+const staticFeatures = {
+  "content-creator": ["Auto-post scheduling", "Caption generation", "Hashtag optimization", "Story creation"],
+  "engagement-bot": ["Smart liking", "Contextual comments", "Follow/unfollow strategy", "DM automation"],
+  "analytics-tracker": ["Performance tracking", "Competitor analysis", "Growth insights", "Report generation"]
+};
+
+const staticCategories = {
+  "content-creator": "Content" as const,
+  "engagement-bot": "Engagement" as const,
+  "analytics-tracker": "Analytics" as const
+};
 
 const AgentSelection = () => {
+  const [agents, setAgents] = useState<Agent[]>([]);
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
   const [expandedAgent, setExpandedAgent] = useState<string | null>(null);
   const [isDeploying, setIsDeploying] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchAgents();
+  }, []);
+
+  const fetchAgents = async () => {
+    try {
+      const response = await fetch('/api/agents/list');
+      const data = await response.json();
+      
+      if (data.success) {
+        const enrichedAgents = data.data.map((agent: any) => ({
+          ...agent,
+          features: staticFeatures[agent.id as keyof typeof staticFeatures] || [],
+          category: staticCategories[agent.id as keyof typeof staticCategories] || "Growth"
+        }));
+        setAgents(enrichedAgents);
+      }
+    } catch (error) {
+      console.error("Failed to fetch agents:", error);
+      toast({
+        title: "Connection Error",
+        description: "Failed to load agents. Please refresh the page.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleDeploy = async () => {
     if (!selectedAgent) {
@@ -93,15 +84,43 @@ const AgentSelection = () => {
 
     setIsDeploying(true);
     
-    // Simulate deployment
-    setTimeout(() => {
-      console.log("Deploying agent:", selectedAgent);
-      toast({
-        title: "Agent Deployed Successfully!",
-        description: `${agent?.name} is now active and running.`,
+    try {
+      const response = await fetch('/api/agents/deploy', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          agentId: selectedAgent,
+          username: localStorage.getItem('ig_username'),
+          password: localStorage.getItem('ig_password')
+        }),
       });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast({
+          title: "Agent Deployed Successfully!",
+          description: `${agent?.name} is now active and running.`,
+        });
+      } else {
+        toast({
+          title: "Deployment Failed",
+          description: data.message || "Failed to deploy agent",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Deployment error:", error);
+      toast({
+        title: "Deployment Error",
+        description: "Failed to connect to server. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
       setIsDeploying(false);
-    }, 3000);
+    }
   };
 
   const getCategoryColor = (category: string) => {
@@ -122,6 +141,17 @@ const AgentSelection = () => {
       default: return "bg-gray-100 text-gray-800";
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-instagram-purple mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading agents...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 p-4">
