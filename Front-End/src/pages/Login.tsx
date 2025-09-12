@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -27,45 +28,16 @@ const Login = () => {
 
     setIsLoading(true);
     
-    try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password }),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        // Store credentials in localStorage for agent usage
-        localStorage.setItem('ig_username', username);
-        localStorage.setItem('ig_password', password);
-        
-        toast({
-          title: "Login Successful",
-          description: "Redirecting to agent selection...",
-        });
-        
-        navigate("/agents");
-      } else {
-        toast({
-          title: "Login Failed",
-          description: data.message || "Invalid credentials",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error("Login error:", error);
+    // Simulate API call
+    setTimeout(() => {
+      console.log("Login attempt:", { username, password });
       toast({
-        title: "Connection Error",
-        description: "Failed to connect to server. Please try again.",
-        variant: "destructive",
+        title: "Login Successful",
+        description: "Redirecting to agent selection...",
       });
-    } finally {
       setIsLoading(false);
-    }
+      navigate("/agents");
+    }, 2000);
   };
 
   return (
