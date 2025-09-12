@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -67,6 +68,7 @@ const agents: Agent[] = [
 ];
 
 const AgentSelection = () => {
+  const navigate = useNavigate();
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
   const [expandedAgent, setExpandedAgent] = useState<string | null>(null);
   const [isDeploying, setIsDeploying] = useState(false);
@@ -101,6 +103,8 @@ const AgentSelection = () => {
         description: `${agent?.name} is now active and running.`,
       });
       setIsDeploying(false);
+      // Navigate to agent status page
+      navigate(`/agent-status?id=${selectedAgent}`);
     }, 3000);
   };
 
