@@ -39,13 +39,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const dotenv_1 = __importDefault(require("dotenv"));
-const helmet_1 = __importDefault(require("helmet")); // For securing HTTP headers
+const helmet_1 = __importDefault(require("helmet"));
+const cors_1 = __importDefault(require("cors"));
 const Instagram_1 = require("./client/Instagram");
 const logger_1 = __importStar(require("./config/logger"));
 const utils_1 = require("./utils");
 const db_1 = require("./config/db");
-// import { main as twitterMain } from './client/Twitter'; //
-// import { main as githubMain } from './client/GitHub'; // 
+const auth_1 = __importDefault(require("./routes/auth"));
+const agents_1 = __importDefault(require("./routes/agents"));
 // Set up process-level error handlers
 (0, logger_1.setupErrorHandlers)();
 // Initialize environment variables
@@ -54,26 +55,34 @@ const app = (0, express_1.default)();
 // Connect to the database
 (0, db_1.connectDB)();
 // Middleware setup
-app.use((0, helmet_1.default)({ xssFilter: true, noSniff: true })); // Security headers
-app.use(express_1.default.json()); // JSON body parsing
-app.use(express_1.default.urlencoded({ extended: true, limit: '1kb' })); // URL-encoded data
-app.use((0, cookie_parser_1.default)()); // Cookie parsing
+app.use((0, helmet_1.default)({ xssFilter: true, noSniff: true }));
+app.use((0, cors_1.default)({
+    origin: 'http://localhost:8080',
+    credentials: true
+}));
+app.use(express_1.default.json());
+app.use(express_1.default.urlencoded({ extended: true, limit: '1kb' }));
+app.use((0, cookie_parser_1.default)());
+// API Routes
+app.use('/api/auth', auth_1.default);
+app.use('/api/agents', agents_1.default);
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
 const runAgents = async () => {
     while (true) {
         logger_1.default.info("Starting Instagram agent iteration...");
         await (0, Instagram_1.runInstagram)();
         logger_1.default.info("Instagram agent iteration finished.");
-        // logger.info("Starting Twitter agent...");
-        // await twitterMain();
-        // logger.info("Twitter agent finished.");
-        // logger.info("Starting GitHub agent...");
-        // await githubMain();
-        // logger.info("GitHub agent finished.");
         // Wait for 30 seconds before next iteration
         await new Promise(resolve => setTimeout(resolve, 30000));
     }
 };
-runAgents().catch(error => {
-    (0, utils_1.setup_HandleError)(error, "Error running agents:");
-});
+// Only run agents automatically if not in API mode
+if (process.env.NODE_ENV !== 'api') {
+    runAgents().catch(error => {
+        (0, utils_1.setup_HandleError)(error, "Error running agents:");
+    });
+}
 exports.default = app;
