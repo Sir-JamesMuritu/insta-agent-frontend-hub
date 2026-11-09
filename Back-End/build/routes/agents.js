@@ -14,7 +14,7 @@ let agentStatus = {
     lastActivity: null
 };
 // Get available agents
-router.get('/list', (req, res) => {
+router.get('/list', (_req, res) => {
     const agents = [
         {
             id: 'content-creator',
@@ -45,16 +45,18 @@ router.post('/deploy', async (req, res) => {
     try {
         const { agentId } = req.body;
         if (!agentId) {
-            return res.status(400).json({
+            res.status(400).json({
                 success: false,
                 message: 'Agent ID is required'
             });
+            return;
         }
         if (agentStatus.isRunning) {
-            return res.status(409).json({
+            res.status(409).json({
                 success: false,
                 message: 'Another agent is already running'
             });
+            return;
         }
         logger_1.default.info(`Deploying agent: ${agentId}`);
         // Update agent status
@@ -93,7 +95,7 @@ router.post('/deploy', async (req, res) => {
     }
 });
 // Get agent status
-router.get('/status', (req, res) => {
+router.get('/status', (_req, res) => {
     res.json({
         success: true,
         data: {
@@ -103,7 +105,7 @@ router.get('/status', (req, res) => {
     });
 });
 // Stop agent
-router.post('/stop', (req, res) => {
+router.post('/stop', (_req, res) => {
     logger_1.default.info('Stopping agent');
     agentStatus = {
         isRunning: false,

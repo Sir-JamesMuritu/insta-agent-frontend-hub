@@ -11,10 +11,11 @@ router.post('/login', async (req, res) => {
     try {
         const { username, password } = req.body;
         if (!username || !password) {
-            return res.status(400).json({
+            res.status(400).json({
                 success: false,
                 message: 'Username and password are required'
             });
+            return;
         }
         // Store credentials temporarily (in production, use secure storage)
         // For now, we'll just validate and return success
